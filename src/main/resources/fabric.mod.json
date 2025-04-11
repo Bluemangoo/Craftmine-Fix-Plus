@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "id": "craftmine-fix-plus",
+  "version": "${version}",
+  "name": "Craftmine-Fix-Plus",
+  "description": "",
+  "authors": [],
+  "contact": {},
+  "license": "GPL-3.0",
+  "icon": "assets/craftmine-fix-plus/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "net.bluemangoo.craftmineFixPlus.CraftmineFixPlus"
+    ]
+  },
+  "mixins": [
+    "craftmine-fix-plus.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "fabric": "*",
+    "minecraft": "1.21.6-alpha.25.14.craftmine"
+  }
+}

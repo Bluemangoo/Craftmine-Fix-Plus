@@ -1,0 +1,17 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "net.bluemangoo.craftmineFixPlus.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "MinecraftServerMixin",
+    "ServerLevelMixin",
+    "ServerPlayerMixin",
+    "TheGameMixin",
+    "WorldEffectMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "refmap": "Craftmine-Fix-Plus-refmap.json"
+}
