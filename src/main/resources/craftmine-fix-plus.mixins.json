@@ -4,6 +4,8 @@
   "package": "net.bluemangoo.craftmineFixPlus.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
+    "DimensionGeneratorMixin",
+    "MappedRegistryMixin",
     "MinecraftServerMixin",
     "ServerLevelMixin",
     "ServerPlayerMixin",
