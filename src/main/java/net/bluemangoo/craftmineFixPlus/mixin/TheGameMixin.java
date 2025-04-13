@@ -6,6 +6,7 @@ import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
 import net.bluemangoo.craftmineFixPlus.mixinInterface.ServerLevelMI;
 import net.bluemangoo.craftmineFixPlus.mixinInterface.TheGameMI;
+import net.bluemangoo.craftmineFixPlus.utils.RwLockLinkedHashMap;
 import net.minecraft.core.LayeredRegistryAccess;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
@@ -20,11 +21,13 @@ import net.minecraft.server.packs.repository.PackRepository;
 import net.minecraft.server.players.PlayerList;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.TicketStorage;
 import net.minecraft.world.level.biome.BiomeManager;
 import net.minecraft.world.level.border.BorderChangeListener;
 import net.minecraft.world.level.storage.DerivedLevelData;
 import net.minecraft.world.level.storage.LevelStorageSource;
 import net.minecraft.world.level.storage.WorldData;
+import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -34,6 +37,8 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.function.Function;
 
 @Mixin(TheGame.class)
@@ -58,31 +63,46 @@ public abstract class TheGameMixin implements TheGameMI {
     @Shadow
     public abstract ServerLevel overworld();
 
-    @Shadow protected abstract void createLevels(ChunkProgressListener chunkProgressListener);
 
-    @Shadow public abstract MinecraftServer server();
+    @Shadow
+    public abstract MinecraftServer server();
 
     @Shadow
     protected abstract void prepareLevels(MinecraftServer minecraftServer, ChunkProgressListener chunkProgressListener);
 
+    @Shadow
+    @Final
+    private static Logger LOGGER;
+
+    @Shadow
+    public abstract GameRules getGameRules();
+
+    @Shadow
+    @Final
+    private Map<ResourceKey<Level>, ServerLevel> levels;
     @Unique
     ChunkProgressListenerFactory chunkProgressListenerFactory;
 
     @Unique
     ServerLevel nextLevel;
 
-    public ServerLevel craftmine_Fix_Plus$getNextLevel(){
-        var level=nextLevel;
-        nextLevel=null;
+    public ServerLevel craftmine_Fix_Plus$getNextLevel() {
+        var level = nextLevel;
+        nextLevel = null;
         return level;
     }
 
-    public ChunkProgressListenerFactory craftmine_Fix_Plus$getChunkProgressListenerFactory() {
-        return this.chunkProgressListenerFactory;
-    }
+//    public ChunkProgressListenerFactory craftmine_Fix_Plus$getChunkProgressListenerFactory() {
+//        return this.chunkProgressListenerFactory;
+//    }
 
     public void craftmine_Fix_Plus$setChunkProgressListenerFactory(ChunkProgressListenerFactory chunkProgressListenerFactory) {
         this.chunkProgressListenerFactory = chunkProgressListenerFactory;
+    }
+
+    @WrapOperation(method = "<init>", at = @At(value = "NEW", target = "()Ljava/util/LinkedHashMap;"))
+    LinkedHashMap<ResourceKey<Level>, ServerLevel> changeMapImpl(Operation<LinkedHashMap<ResourceKey<Level>, ServerLevel>> original) {
+        return new RwLockLinkedHashMap<>();
     }
 
     @WrapOperation(method = "saveAllChunks", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/TheGame;getAllLevels()Ljava/util/Collection;"))
@@ -116,10 +136,15 @@ public abstract class TheGameMixin implements TheGameMI {
         );
         var worldBorder = overworld().getWorldBorder();
         worldBorder.addListener(new BorderChangeListener.DelegateBorderChangeListener(serverLevel.getWorldBorder()));
-        this.nextLevel=serverLevel;
         worldBorder.applySettings(this.worldData.overworldData().getWorldBorder());
-        createLevels(chunkProgressListener);
-        prepareLevels(server(), chunkProgressListener);
+
+        TicketStorage ticketStorage = serverLevel.getDataStorage().get(TicketStorage.TYPE);
+        if (ticketStorage != null) {
+            ticketStorage.activateAllDeactivatedTickets();
+        }
+        chunkProgressListener.stop();
+
+        this.nextLevel = serverLevel;
         return serverLevel;
     }
 }
