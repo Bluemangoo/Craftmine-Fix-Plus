@@ -1,3 +1,4 @@
 accessWidener v2 named
 accessible field net/minecraft/server/level/ServerLevel theGame Lnet/minecraft/server/TheGame;
 accessible class net/minecraft/server/level/DimensionGenerator$FakeLevelStem
+accessible method net/minecraft/core/Holder$Reference bindTags (Ljava/util/Collection;)V

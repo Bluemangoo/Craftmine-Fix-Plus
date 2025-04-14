@@ -27,7 +27,6 @@ import net.minecraft.world.level.border.BorderChangeListener;
 import net.minecraft.world.level.storage.DerivedLevelData;
 import net.minecraft.world.level.storage.LevelStorageSource;
 import net.minecraft.world.level.storage.WorldData;
-import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -63,20 +62,6 @@ public abstract class TheGameMixin implements TheGameMI {
     @Shadow
     public abstract ServerLevel overworld();
 
-
-    @Shadow
-    public abstract MinecraftServer server();
-
-    @Shadow
-    protected abstract void prepareLevels(MinecraftServer minecraftServer, ChunkProgressListener chunkProgressListener);
-
-    @Shadow
-    @Final
-    private static Logger LOGGER;
-
-    @Shadow
-    public abstract GameRules getGameRules();
-
     @Shadow
     @Final
     private Map<ResourceKey<Level>, ServerLevel> levels;
@@ -91,10 +76,6 @@ public abstract class TheGameMixin implements TheGameMI {
         nextLevel = null;
         return level;
     }
-
-//    public ChunkProgressListenerFactory craftmine_Fix_Plus$getChunkProgressListenerFactory() {
-//        return this.chunkProgressListenerFactory;
-//    }
 
     public void craftmine_Fix_Plus$setChunkProgressListenerFactory(ChunkProgressListenerFactory chunkProgressListenerFactory) {
         this.chunkProgressListenerFactory = chunkProgressListenerFactory;
@@ -144,7 +125,7 @@ public abstract class TheGameMixin implements TheGameMI {
         }
         chunkProgressListener.stop();
 
-        this.nextLevel = serverLevel;
+        this.levels.put(resourceKey, serverLevel);
         return serverLevel;
     }
 }

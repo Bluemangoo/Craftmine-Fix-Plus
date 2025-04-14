@@ -33,7 +33,7 @@ public class DimensionGeneratorMixin {
         var fake = (DimensionGenerator.FakeLevelStem) object;
         var levelStem = new LevelStem(holder, Optional.empty(), fake.effects(), fake.mine(), fake.spawn());
         ResourceKey<LevelStem> resourceKey = ResourceKey.create(Registries.LEVEL_STEM, resourceLocation);
-        var reg = (WritableRegistry) theGame.registries().compositeAccess().lookupOrThrow(Registries.LEVEL_STEM);
+        var reg = (WritableRegistry<LevelStem>) theGame.registries().compositeAccess().lookupOrThrow(Registries.LEVEL_STEM);
         reg.register(resourceKey, levelStem, RegistrationInfo.BUILT_IN);
 
         return original.call(object, codec, registryOps, path);
@@ -44,15 +44,17 @@ public class DimensionGeneratorMixin {
     private static CompletableFuture<?> saveBiome(Object object, Codec<?> codec, RegistryOps<JsonElement> registryOps, Path path, Operation<CompletableFuture<?>> original, @Local Holder<DimensionType> holder, @Local(argsOnly = true) TheGame theGame, @Local ResourceLocation resourceLocation, @Local WorldGenBuilder.ModifiedBiome modifiedBiome) {
         var biome = (Biome) object;
         ResourceKey<Biome> resourceKey = ResourceKey.create(Registries.BIOME, new ResourceLocation(resourceLocation.getNamespace(), modifiedBiome.modified().location().getPath()));
-        var reg = (WritableRegistry) theGame.registries().compositeAccess().lookupOrThrow(Registries.BIOME);
-        reg.register(resourceKey, biome, RegistrationInfo.BUILT_IN);
+        var reg = (WritableRegistry<Biome>) theGame.registries().compositeAccess().lookupOrThrow(Registries.BIOME);
+        var biomeHolder = reg.register(resourceKey, biome, RegistrationInfo.BUILT_IN);
+        var originBiomeHolder = reg.get(modifiedBiome.original()).get();
+        biomeHolder.bindTags(originBiomeHolder.tags().toList());
         return original.call(object, codec, registryOps, path);
     }
 
     @WrapOperation(method = "generateDimension", at = @At(value = "INVOKE", target = "Lnet/minecraft/resources/ResourceKey;create(Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/resources/ResourceLocation;)Lnet/minecraft/resources/ResourceKey;", ordinal = 0))
-    private static ResourceKey<?> saveLevelType(ResourceKey<? extends Registry<?>> resourceKey, ResourceLocation resourceLocation, Operation<ResourceKey<?>> original, @Local(argsOnly = true) TheGame theGame,@Local DimensionType dimensionType){
-        var key= (ResourceKey<DimensionType>) original.call(resourceKey, resourceLocation);
-        var reg = (WritableRegistry) theGame.registries().compositeAccess().lookupOrThrow(Registries.DIMENSION_TYPE);
+    private static ResourceKey<?> saveLevelType(ResourceKey<? extends Registry<?>> resourceKey, ResourceLocation resourceLocation, Operation<ResourceKey<?>> original, @Local(argsOnly = true) TheGame theGame, @Local DimensionType dimensionType) {
+        var key = (ResourceKey<DimensionType>) original.call(resourceKey, resourceLocation);
+        var reg = (WritableRegistry<DimensionType>) theGame.registries().compositeAccess().lookupOrThrow(Registries.DIMENSION_TYPE);
         reg.register(key, dimensionType, RegistrationInfo.BUILT_IN);
         return key;
     }
