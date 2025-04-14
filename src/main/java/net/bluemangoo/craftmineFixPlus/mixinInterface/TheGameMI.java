@@ -9,6 +9,4 @@ public interface TheGameMI {
     void craftmine_Fix_Plus$setChunkProgressListenerFactory(ChunkProgressListenerFactory chunkProgressListenerFactory);
 
     ServerLevel craftmine_Fix_Plus$tryInitLevel(ResourceKey<Level> resourceKey);
-
-    ServerLevel craftmine_Fix_Plus$getNextLevel();
 }

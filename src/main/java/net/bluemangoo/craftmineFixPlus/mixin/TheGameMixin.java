@@ -68,15 +68,6 @@ public abstract class TheGameMixin implements TheGameMI {
     @Unique
     ChunkProgressListenerFactory chunkProgressListenerFactory;
 
-    @Unique
-    ServerLevel nextLevel;
-
-    public ServerLevel craftmine_Fix_Plus$getNextLevel() {
-        var level = nextLevel;
-        nextLevel = null;
-        return level;
-    }
-
     public void craftmine_Fix_Plus$setChunkProgressListenerFactory(ChunkProgressListenerFactory chunkProgressListenerFactory) {
         this.chunkProgressListenerFactory = chunkProgressListenerFactory;
     }
