@@ -35,9 +35,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
 @Mixin(TheGame.class)
@@ -54,7 +53,6 @@ public abstract class TheGameMixin implements TheGameMI {
     @Final
     private LevelStorageSource.LevelStorageAccess storageSource;
 
-
     @Shadow
     @Final
     private LayeredRegistryAccess<RegistryLayer> registries;
@@ -65,6 +63,7 @@ public abstract class TheGameMixin implements TheGameMI {
     @Shadow
     @Final
     private Map<ResourceKey<Level>, ServerLevel> levels;
+
     @Unique
     ChunkProgressListenerFactory chunkProgressListenerFactory;
 
@@ -87,7 +86,7 @@ public abstract class TheGameMixin implements TheGameMI {
         ((TheGameMI) theGame).craftmine_Fix_Plus$setChunkProgressListenerFactory(chunkProgressListenerFactory);
     }
 
-    public ServerLevel craftmine_Fix_Plus$tryInitLevel(ResourceKey<Level> resourceKey) {
+    public void craftmine_Fix_Plus$tryInitLevel(ResourceKey<Level> resourceKey) {
         var levelStem = registries.compositeAccess().lookupOrThrow(Registries.LEVEL_STEM).entrySet().stream().filter(entry -> entry.getKey().location().equals(resourceKey.location())).findFirst().get().getValue();
 
         ChunkProgressListener chunkProgressListener = chunkProgressListenerFactory.create(worldData.getGameRules().getInt(GameRules.RULE_SPAWN_CHUNK_RADIUS));
@@ -115,8 +114,16 @@ public abstract class TheGameMixin implements TheGameMI {
             ticketStorage.activateAllDeactivatedTickets();
         }
         chunkProgressListener.stop();
-
         this.levels.put(resourceKey, serverLevel);
-        return serverLevel;
+    }
+
+    public CompletableFuture<MinecraftServer> craftmine_Fix_Plus$tryReconfigureClients() {
+        server.restoreAllPlayersConfigPlayers((TheGame) (Object) this);
+        var future = server.rejoinFuture;
+        if (future == null) {
+            future = new CompletableFuture<>();
+            server.rejoinFuture = future;
+        }
+        return server.rejoinFuture;
     }
 }

@@ -2,3 +2,6 @@ accessWidener v2 named
 accessible field net/minecraft/server/level/ServerLevel theGame Lnet/minecraft/server/TheGame;
 accessible class net/minecraft/server/level/DimensionGenerator$FakeLevelStem
 accessible method net/minecraft/core/Holder$Reference bindTags (Ljava/util/Collection;)V
+accessible method net/minecraft/server/MinecraftServer restoreAllPlayersConfigPlayers (Lnet/minecraft/server/TheGame;)V
+accessible method net/minecraft/server/MinecraftServer waitForPlayersToEnterConfig ()V
+accessible field net/minecraft/server/MinecraftServer rejoinFuture Ljava/util/concurrent/CompletableFuture;
