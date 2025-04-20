@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.List;
 
-@Mixin(WorldEffect.class)
+@Mixin(WorldEffect.Builder.class)
 public class WorldEffectMixin {
     @Shadow
     @Final
@@ -21,10 +21,9 @@ public class WorldEffectMixin {
 
     @Mutable
     @Shadow
-    @Final
     private RandomizationMode randomizationMode;
 
-    @Inject(method = "requiredUnlockCount", at = @At("HEAD"))
+    @Inject(method = "requiresUnlockCount", at = @At("HEAD"))
     void requiresUnlockCount(CallbackInfoReturnable<Integer> cir) {
         if (unlockedBy.isEmpty()) {
             randomizationMode = RandomizationMode.WHEN_UNLOCKABLE;
