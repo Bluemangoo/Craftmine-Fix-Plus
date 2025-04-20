@@ -1,6 +1,9 @@
 package net.bluemangoo.craftmineFixPlus.mixin;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.bluemangoo.craftmineFixPlus.mixinInterface.ServerLevelMI;
+import net.bluemangoo.craftmineFixPlus.mixinInterface.TheGameMI;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.RegistryAccess;
@@ -13,6 +16,7 @@ import net.minecraft.server.level.progress.ChunkProgressListener;
 import net.minecraft.util.ProgressListener;
 import net.minecraft.world.MineData;
 import net.minecraft.world.RandomSequences;
+import net.minecraft.world.food.FoodData;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.MineTravellingBlockEntity;
 import net.minecraft.world.level.dimension.DimensionType;
@@ -52,10 +56,14 @@ public abstract class ServerLevelMixin extends Level implements ServerLevelMI {
     protected MineData mineData;
     @Shadow
     @Final
-    private TheGame theGame;
+    public TheGame theGame;
 
     @Shadow
     public abstract @NotNull List<ServerPlayer> players();
+
+    @Shadow
+    @NotNull
+    public abstract TheGame theGame();
 
     @Unique
     private boolean joined = false;
@@ -102,6 +110,7 @@ public abstract class ServerLevelMixin extends Level implements ServerLevelMI {
         }
     }
 
+
     /**
      * @author Bluemangoo
      * @reason fix bug from swapInventoryFromHub execute time
@@ -118,10 +127,18 @@ public abstract class ServerLevelMixin extends Level implements ServerLevelMI {
             var thisLevel = this.resourceKey;
 
             if (serverLevel == null) {
-                this.theGame.server().sayGoodbye().thenAcceptAsync(minecraftServer -> {
+                var server = theGame.server();
+                for (ServerPlayer serverPlayer : List.copyOf(theGame.playerList().getPlayers())) {
+                    serverPlayer.connection.switchToConfig();
+                }
+                server.waitForPlayersToEnterConfig();
+                theGame.playerList().saveAll();
+                theGame.playerList().removeAll();
+                ((TheGameMI) theGame()).craftmine_Fix_Plus$tryInitLevel(resourceKey);
+                ((TheGameMI) theGame()).craftmine_Fix_Plus$tryReconfigureClients().thenAcceptAsync(minecraftServer -> {
                     ServerLevel serverLevelx = minecraftServer.theGame().getLevel(resourceKey);
                     if (serverLevelx != null) {
-                        for (ServerPlayer serverPlayer :serverLevelx.theGame.getLevel(thisLevel).players()) {
+                        for (ServerPlayer serverPlayer : serverLevelx.theGame.getLevel(thisLevel).players()) {
                             if ((optional.isEmpty() || optional.get().equals(serverPlayer.getUUID())) && !serverPlayer.isSpectator()) {
                                 serverPlayer.swapInventoryFromHub();
                             }
@@ -129,6 +146,7 @@ public abstract class ServerLevelMixin extends Level implements ServerLevelMI {
                         serverLevelx.teleportAllPlayersToMine(bl, optional);
                     }
                 }, this.theGame.server());
+
             } else {
                 for (ServerPlayer serverPlayer : this.players()) {
                     if ((optional.isEmpty() || optional.get().equals(serverPlayer.getUUID())) && !serverPlayer.isSpectator()) {
@@ -138,5 +156,11 @@ public abstract class ServerLevelMixin extends Level implements ServerLevelMI {
                 serverLevel.teleportAllPlayersToMine(bl, optional);
             }
         }
+    }
+
+    @WrapOperation(method = "respawnPlayerIntoHub", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/food/FoodData;setFoodLevel(I)V"))
+    void respawnPlayerIntoHub(FoodData instance, int i, Operation<Void> original) {
+        original.call(instance, i);
+        instance.setSaturation(5.0F);
     }
 }

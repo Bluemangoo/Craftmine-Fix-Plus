@@ -10,7 +10,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(MinecraftServer.class)
 public class MinecraftServerMixin {
-
     @Inject(method = "stopServer", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/MinecraftServer;stopTheGame(Lnet/minecraft/server/TheGame;)V"))
     void stopServer(TheGame theGame, CallbackInfo ci) {
         theGame.getAllLevels().forEach(serverLevel -> ((ServerLevelMI) serverLevel).craftmine_Fix_Plus$isJoined());
